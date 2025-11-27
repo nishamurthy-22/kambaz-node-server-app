@@ -16,7 +16,9 @@ mongoose.connect(CONNECTION_STRING);
 const app = express()
 const allowedOrigins = [
   "http://localhost:3000",
-  "https://kambaz-next-js-git-a5-nisha-murthy-dineshs-projects.vercel.app"]
+  "https://kambaz-next-js-git-a5-nisha-murthy-dineshs-projects.vercel.app",
+  "https://kambaz-next-js-git-a6-nisha-murthy-dineshs-projects.vercel.app"
+]
 
 app.use(
   cors({

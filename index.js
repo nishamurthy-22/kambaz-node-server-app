@@ -14,47 +14,31 @@ import session from "express-session";
 const CONNECTION_STRING = process.env.DATABASE_CONNECTION_STRING || "mongodb://127.0.0.1:27017/kambaz"
 mongoose.connect(CONNECTION_STRING);
 const app = express()
-const allowedOrigins = [
-  "http://localhost:3000",
-  "https://kambaz-next-js-git-a5-nisha-murthy-dineshs-projects.vercel.app",
-  "https://kambaz-next-js-git-a6-nisha-murthy-dineshs-projects.vercel.app"
-]
 
-const corsOptions = {
-  credentials: true,
-  origin: function (origin, callback) {
-    try {
-      if (!origin) {
-        return callback(null, true);
-      }
-      
-      if (origin.startsWith("http://localhost")) {
-        return callback(null, true);
-      }
-      
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-      
-      if (origin.includes("vercel.app") || origin.includes("vercel-dns.com")) {
-        return callback(null, true);
-      }
-      
-      console.log('CORS: Rejected origin:', origin);
-      return callback(null, false);
-    } catch (error) {
-      console.error('CORS origin check error:', error);
-      return callback(error, false);
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  
+  if (!origin || 
+      origin.includes('localhost') || 
+      origin.includes('vercel.app') || 
+      origin.includes('vercel-dns.com')) {
+    if (origin) {
+      res.header('Access-Control-Allow-Origin', origin);
+      res.header('Access-Control-Allow-Credentials', 'true');
+    } else {
+      res.header('Access-Control-Allow-Origin', '*');
     }
-  },
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  exposedHeaders: ['Content-Type'],
-  preflightContinue: false,
-  optionsSuccessStatus: 200
-};
-
-app.use(cors(corsOptions));
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS, PATCH');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+    res.header('Access-Control-Expose-Headers', 'Content-Type');
+  }
+  
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  
+  next();
+});
 
 const sessionOptions = {
   secret: process.env.SESSION_SECRET || "kambaz",

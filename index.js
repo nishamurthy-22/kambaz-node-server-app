@@ -56,8 +56,6 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
-app.options('*', cors(corsOptions));
-
 const sessionOptions = {
   secret: process.env.SESSION_SECRET || "kambaz",
   resave: false,

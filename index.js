@@ -20,28 +20,44 @@ const allowedOrigins = [
   "https://kambaz-next-js-git-a6-nisha-murthy-dineshs-projects.vercel.app"
 ]
 
-app.use(
-  cors({
-    credentials: true,
-    origin: function (origin, callback) {
-      // Allow requests with no origin (like mobile apps or curl requests)
-      if (!origin) return callback(null, true);
+const corsOptions = {
+  credentials: true,
+  origin: function (origin, callback) {
+    try {
+      if (!origin) {
+        return callback(null, true);
+      }
       
-      // Check if origin is in allowed list
+      if (origin.startsWith("http://localhost")) {
+        return callback(null, true);
+      }
+      
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
       
-      // Allow any Vercel deployment (for flexibility during development)
       if (origin.includes("vercel.app") || origin.includes("vercel-dns.com")) {
         return callback(null, true);
       }
       
-      // Reject other origins
+      console.log('CORS: Rejected origin:', origin);
       return callback(null, false);
-    },
-  })
-);
+    } catch (error) {
+      console.error('CORS origin check error:', error);
+      return callback(error, false);
+    }
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['Content-Type'],
+  preflightContinue: false,
+  optionsSuccessStatus: 200
+};
+
+app.use(cors(corsOptions));
+
+app.options('*', cors(corsOptions));
+
 const sessionOptions = {
   secret: process.env.SESSION_SECRET || "kambaz",
   resave: false,
@@ -52,7 +68,6 @@ if (process.env.SERVER_ENV !== "development") {
   sessionOptions.cookie = {
     sameSite: "none",
     secure: true,
-    domain: process.env.SERVER_URL,
   };
 }
 app.use(session(sessionOptions));
@@ -64,4 +79,16 @@ CourseRoutes(app, db);
 ModulesRoutes(app,db);
 AssignmentsRoutes(app,db);
 EnrollmentsRoutes(app, db);
-app.listen(process.env.PORT || 4000)
+app.use((err, req, res, next) => {
+  console.error('Server Error:', err);
+  if (err.message && err.message.includes('CORS')) {
+    return res.status(403).json({ error: 'CORS policy violation' });
+  }
+  res.status(err.status || 500).json({ 
+    error: err.message || 'Internal server error' 
+  });
+});
+
+app.listen(process.env.PORT || 4000, () => {
+  console.log(`Server running on port ${process.env.PORT || 4000}`);
+})

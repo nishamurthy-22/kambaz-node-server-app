@@ -24,11 +24,21 @@ app.use(
   cors({
     credentials: true,
     origin: function (origin, callback) {
+      // Allow requests with no origin (like mobile apps or curl requests)
       if (!origin) return callback(null, true);
+      
+      // Check if origin is in allowed list
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
-      return callback(new Error("Not allowed by CORS"));
+      
+      // Allow any Vercel deployment (for flexibility during development)
+      if (origin.includes("vercel.app") || origin.includes("vercel-dns.com")) {
+        return callback(null, true);
+      }
+      
+      // Reject other origins
+      return callback(null, false);
     },
   })
 );

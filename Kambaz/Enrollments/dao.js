@@ -3,20 +3,39 @@ import model from "./model.js";
 export default function EnrollmentsDao() {
 
   const enrollUserInCourse = async (userId, courseId) => {
+    // Use findOneAndUpdate with upsert to prevent duplicates
+    // Normalize IDs to strings for consistent comparison
+    const userIdStr = String(userId);
+    const courseIdStr = String(courseId);
     const enrollment = await model.findOneAndUpdate(
-      { user: userId, course: courseId },
-      { user: userId, course: courseId },
+      { user: userIdStr, course: courseIdStr },
+      { user: userIdStr, course: courseIdStr },
       { upsert: true, new: true }
     ).lean();
     return enrollment;
   };
 
+ async function findCoursesForUser(userId) {
+   const enrollments = await model.find({ user: userId }).populate("course");
+   return enrollments.map((enrollment) => enrollment.course);
+ }
+ async function findUsersForCourse(courseId) {
+   const enrollments = await model.find({ course: String(courseId) }).populate("user");
+   return enrollments.map((enrollment) => enrollment.user);
+ }
   const unenrollUserFromCourse = async (userId, courseId) => {
-    await model.deleteOne({ user: userId, course: courseId });
+    const result = await model.deleteOne({ 
+      user: String(userId), 
+      course: String(courseId) 
+    });
+    if (result.deletedCount === 0) {
+      console.warn(`No enrollment found to delete for user ${userId} and course ${courseId}`);
+    }
+    return result;
   };
 
   const findEnrollmentsForUser = async (userId) => {
-    const enrollments = await model.find({ user: userId }).lean();
+    const enrollments = await model.find({ user: String(userId) }).lean();
     return enrollments;
   };
 
@@ -25,10 +44,17 @@ export default function EnrollmentsDao() {
     return enrollments;
   };
 
+  const unenrollAllFromCourse = async (courseId) => {
+    await model.deleteMany({ course: String(courseId) });
+  };
+
   return {
     enrollUserInCourse,
     unenrollUserFromCourse,
     findEnrollmentsForUser,
-    findEnrollmentsForCourse
+    findEnrollmentsForCourse,
+    unenrollAllFromCourse,
+    findCoursesForUser,
+    findUsersForCourse,
   };
 }

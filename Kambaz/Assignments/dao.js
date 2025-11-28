@@ -1,29 +1,53 @@
 import { v4 as uuidv4 } from "uuid";
-export default function AssignmentsDao(db) {
-     function findAssignmentsForCourse(courseId) {
-   const { assignments } = db;
-   return assignments.filter((assignments) => assignments.course === courseId);
- }
+import model from "./model.js";
 
- function createAssignment(assignment) {
-  const newAssignment = { ...assignment, _id: uuidv4() };
-  db.assignments = [...db.assignments, newAssignment];
-  return newAssignment;
-}
+export default function AssignmentsDao() {
+  async function findAssignmentsForCourse(courseId) {
+    const assignments = await model.find({ course: String(courseId) }).lean();
+    return assignments;
+  }
 
- function deleteAssignment(assignmentId) {
-  const { assignments } = db;
-  db.assignments = assignments.filter((assignment) => assignment._id !== assignmentId);
-}
+  async function createAssignment(assignment) {
+    const newAssignment = {
+      ...assignment,
+      _id: assignment._id || uuidv4(),
+    };
+    const createdAssignment = await model.create(newAssignment);
+    return createdAssignment.toObject();
+  }
 
-function updateAssignment(assignmentId, assignmentUpdates) {
-  const { assignments } = db;
-  const assignment = assignments.find((assignment) => assignment._id === assignmentId);
-  Object.assign(assignment, assignmentUpdates);
-  return assignment;
-}
+  async function deleteAssignment(assignmentId) {
+    const result = await model.deleteOne({ _id: String(assignmentId) });
+    if (result.deletedCount === 0) {
+      console.warn(`No assignment found to delete with id ${assignmentId}`);
+    }
+    return result;
+  }
 
- return {
-   findAssignmentsForCourse,createAssignment, deleteAssignment, updateAssignment
- };
+  async function updateAssignment(assignmentId, assignmentUpdates) {
+    const assignment = await model.findOneAndUpdate(
+      { _id: String(assignmentId) },
+      { $set: assignmentUpdates },
+      { new: true }
+    ).lean();
+    
+    if (!assignment) {
+      throw new Error(`Assignment with id ${assignmentId} not found`);
+    }
+    
+    return assignment;
+  }
+
+  async function deleteAssignmentsForCourse(courseId) {
+    const result = await model.deleteMany({ course: String(courseId) });
+    return result;
+  }
+
+  return {
+    findAssignmentsForCourse,
+    createAssignment,
+    deleteAssignment,
+    updateAssignment,
+    deleteAssignmentsForCourse,
+  };
 }

@@ -12,8 +12,12 @@ import "dotenv/config";
 import session from "express-session";
 import usersData from "./Kambaz/Database/users.js";
 import coursesData from "./Kambaz/Database/courses.js";
+import assignmentsData from "./Kambaz/Database/assignments.js";
+import enrollmentsData from "./Kambaz/Database/enrollments.js";
 import UserModel from "./Kambaz/Users/model.js";
 import CourseModel from "./Kambaz/Courses/model.js";
+import AssignmentModel from "./Kambaz/Assignments/model.js";
+import EnrollmentModel from "./Kambaz/Enrollments/model.js";
 
 const CONNECTION_STRING = process.env.DATABASE_CONNECTION_STRING || "mongodb://127.0.0.1:27017/kambaz";
 mongoose.connect(CONNECTION_STRING).then(async () => {
@@ -33,6 +37,22 @@ mongoose.connect(CONNECTION_STRING).then(async () => {
     console.log("Seeding courses...");
     await CourseModel.insertMany(coursesData);
     console.log(`Seeded ${coursesData.length} courses`);
+  }
+  
+  // Seed assignments if collection is empty
+  const assignmentCount = await AssignmentModel.countDocuments();
+  if (assignmentCount === 0) {
+    console.log("Seeding assignments...");
+    await AssignmentModel.insertMany(assignmentsData);
+    console.log(`Seeded ${assignmentsData.length} assignments`);
+  }
+  
+  // Seed enrollments if collection is empty
+  const enrollmentCount = await EnrollmentModel.countDocuments();
+  if (enrollmentCount === 0) {
+    console.log("Seeding enrollments...");
+    await EnrollmentModel.insertMany(enrollmentsData);
+    console.log(`Seeded ${enrollmentsData.length} enrollments`);
   }
 }).catch((error) => {
   console.error("MongoDB connection error:", error);
@@ -83,7 +103,7 @@ app.use(express.json());
 // Manual seeding endpoint (supports both GET and POST)
 const seedDatabase = async (req, res) => {
   try {
-    let results = { users: 0, courses: 0, errors: [] };
+    let results = { users: 0, courses: 0, assignments: 0, enrollments: 0, errors: [] };
     
     // Seed users
     const userCount = await UserModel.countDocuments();
@@ -91,7 +111,7 @@ const seedDatabase = async (req, res) => {
       try {
         await UserModel.insertMany(usersData);
         results.users = usersData.length;
-        console.log(`✅ Seeded ${usersData.length} users`);
+        console.log(`Seeded ${usersData.length} users`);
       } catch (error) {
         results.errors.push(`Users: ${error.message}`);
         console.error("Error seeding users:", error);
@@ -107,7 +127,7 @@ const seedDatabase = async (req, res) => {
       try {
         await CourseModel.insertMany(coursesData);
         results.courses = coursesData.length;
-        console.log(`✅ Seeded ${coursesData.length} courses`);
+        console.log(`Seeded ${coursesData.length} courses`);
       } catch (error) {
         results.errors.push(`Courses: ${error.message}`);
         console.error("Error seeding courses:", error);
@@ -115,6 +135,38 @@ const seedDatabase = async (req, res) => {
     } else {
       results.courses = courseCount;
       console.log(`Courses already exist: ${courseCount}`);
+    }
+    
+    // Seed assignments
+    const assignmentCount = await AssignmentModel.countDocuments();
+    if (assignmentCount === 0) {
+      try {
+        await AssignmentModel.insertMany(assignmentsData);
+        results.assignments = assignmentsData.length;
+        console.log(`Seeded ${assignmentsData.length} assignments`);
+      } catch (error) {
+        results.errors.push(`Assignments: ${error.message}`);
+        console.error("Error seeding assignments:", error);
+      }
+    } else {
+      results.assignments = assignmentCount;
+      console.log(`Assignments already exist: ${assignmentCount}`);
+    }
+    
+    // Seed enrollments
+    const enrollmentCount = await EnrollmentModel.countDocuments();
+    if (enrollmentCount === 0) {
+      try {
+        await EnrollmentModel.insertMany(enrollmentsData);
+        results.enrollments = enrollmentsData.length;
+        console.log(`Seeded ${enrollmentsData.length} enrollments`);
+      } catch (error) {
+        results.errors.push(`Enrollments: ${error.message}`);
+        console.error("Error seeding enrollments:", error);
+      }
+    } else {
+      results.enrollments = enrollmentCount;
+      console.log(`Enrollments already exist: ${enrollmentCount}`);
     }
     
     res.json({ 

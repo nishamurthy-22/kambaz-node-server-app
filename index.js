@@ -79,6 +79,67 @@ if (process.env.SERVER_ENV !== "development") {
 }
 app.use(session(sessionOptions));
 app.use(express.json());
+
+// Manual seeding endpoint (supports both GET and POST)
+const seedDatabase = async (req, res) => {
+  try {
+    let results = { users: 0, courses: 0, errors: [] };
+    
+    // Seed users
+    const userCount = await UserModel.countDocuments();
+    if (userCount === 0) {
+      try {
+        await UserModel.insertMany(usersData);
+        results.users = usersData.length;
+        console.log(`✅ Seeded ${usersData.length} users`);
+      } catch (error) {
+        results.errors.push(`Users: ${error.message}`);
+        console.error("Error seeding users:", error);
+      }
+    } else {
+      results.users = userCount;
+      console.log(`Users already exist: ${userCount}`);
+    }
+    
+    // Seed courses
+    const courseCount = await CourseModel.countDocuments();
+    if (courseCount === 0) {
+      try {
+        await CourseModel.insertMany(coursesData);
+        results.courses = coursesData.length;
+        console.log(`✅ Seeded ${coursesData.length} courses`);
+      } catch (error) {
+        results.errors.push(`Courses: ${error.message}`);
+        console.error("Error seeding courses:", error);
+      }
+    } else {
+      results.courses = courseCount;
+      console.log(`Courses already exist: ${courseCount}`);
+    }
+    
+    res.json({ 
+      success: true, 
+      message: "Seeding completed",
+      results 
+    });
+  } catch (error) {
+    console.error("Seeding error:", error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
+  }
+};
+
+// Seed endpoint - must be before other routes
+app.get("/api/seed", seedDatabase);
+app.post("/api/seed", seedDatabase);
+
+// Test endpoint to verify server is running
+app.get("/api/test", (req, res) => {
+  res.json({ message: "Server is running", timestamp: new Date().toISOString() });
+});
+
 Lab5(app)
 Hello(app)
 UserRoutes(app);

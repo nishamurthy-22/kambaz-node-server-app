@@ -218,6 +218,49 @@ const seedDatabase = async (req, res) => {
 app.get("/api/seed", seedDatabase);
 app.post("/api/seed", seedDatabase);
 
+const reseedDatabase = async (req, res) => {
+  try {
+    console.log("Starting full reseed...");
+    
+    await UserModel.deleteMany({});
+    await CourseModel.deleteMany({});
+    await AssignmentModel.deleteMany({});
+    await EnrollmentModel.deleteMany({});
+    
+    console.log("Cleared all collections");
+    
+
+    await UserModel.insertMany(usersData);
+    await CourseModel.insertMany(coursesData);
+    await AssignmentModel.insertMany(assignmentsData);
+    await EnrollmentModel.insertMany(enrollmentsData);
+    
+    const results = {
+      users: await UserModel.countDocuments(),
+      courses: await CourseModel.countDocuments(),
+      assignments: await AssignmentModel.countDocuments(),
+      enrollments: await EnrollmentModel.countDocuments()
+    };
+    
+    console.log("Reseed completed:", results);
+    
+    res.json({ 
+      success: true, 
+      message: "Reseed completed - all data cleared and reseeded",
+      results 
+    });
+  } catch (error) {
+    console.error("Reseed error:", error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message 
+    });
+  }
+};
+
+app.get("/api/reseed", reseedDatabase);
+app.post("/api/reseed", reseedDatabase);
+
 app.get("/api/test", (req, res) => {
   res.json({ message: "Server is running", timestamp: new Date().toISOString() });
 });

@@ -6,6 +6,11 @@ const courseSchema = new mongoose.Schema({
    number: String,
    credits: Number,
    description: String,
+   img: String,
+   startDate: String,
+   endDate: String,
+   department: String,
+   author: String,
    modules: [moduleSchema]
  },
  { collection: "courses" }

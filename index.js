@@ -47,8 +47,30 @@ mongoose.connect(CONNECTION_STRING).then(async () => {
   const enrollmentCount = await EnrollmentModel.countDocuments();
   if (enrollmentCount === 0) {
     console.log("Seeding enrollments...");
-    await EnrollmentModel.insertMany(enrollmentsData);
-    console.log(`Seeded ${enrollmentsData.length} enrollments`);
+    try {
+      await EnrollmentModel.insertMany(enrollmentsData, { ordered: false });
+      const newCount = await EnrollmentModel.countDocuments();
+      console.log(`Seeded ${newCount} enrollments`);
+    } catch (error) {
+      const newCount = await EnrollmentModel.countDocuments();
+      console.log(`Seeded ${newCount} enrollments (some may have failed: ${error.message})`);
+    }
+  } else {
+    try {
+      const existingIds = await EnrollmentModel.find().select('_id').lean();
+      const existingIdSet = new Set(existingIds.map(e => e._id));
+      const missingEnrollments = enrollmentsData.filter(e => !existingIdSet.has(e._id));
+      
+      if (missingEnrollments.length > 0) {
+        await EnrollmentModel.insertMany(missingEnrollments, { ordered: false });
+        const finalCount = await EnrollmentModel.countDocuments();
+        console.log(`Inserted ${missingEnrollments.length} missing enrollments. Total: ${finalCount}`);
+      } else {
+        console.log(`All ${enrollmentCount} enrollments already exist`);
+      }
+    } catch (error) {
+      console.error("Error inserting missing enrollments:", error);
+    }
   }
 }).catch((error) => {
   console.error("MongoDB connection error:", error);
@@ -146,16 +168,37 @@ const seedDatabase = async (req, res) => {
     const enrollmentCount = await EnrollmentModel.countDocuments();
     if (enrollmentCount === 0) {
       try {
-        await EnrollmentModel.insertMany(enrollmentsData);
-        results.enrollments = enrollmentsData.length;
-        console.log(`Seeded ${enrollmentsData.length} enrollments`);
+        await EnrollmentModel.insertMany(enrollmentsData, { ordered: false });
+        const newCount = await EnrollmentModel.countDocuments();
+        results.enrollments = newCount;
+        console.log(`Seeded ${newCount} enrollments`);
       } catch (error) {
+        const newCount = await EnrollmentModel.countDocuments();
+        results.enrollments = newCount;
+        results.errors.push(`Enrollments: ${error.message}`);
+        console.error("Error seeding enrollments:", error);
+        console.log(`Inserted ${newCount} enrollments despite errors`);
+      }
+    } else {
+      // If enrollments exist, try to insert missing ones
+      try {
+        const existingIds = await EnrollmentModel.find().select('_id').lean();
+        const existingIdSet = new Set(existingIds.map(e => e._id));
+        const missingEnrollments = enrollmentsData.filter(e => !existingIdSet.has(e._id));
+        
+        if (missingEnrollments.length > 0) {
+          await EnrollmentModel.insertMany(missingEnrollments, { ordered: false });
+          console.log(`Inserted ${missingEnrollments.length} missing enrollments`);
+        }
+        const finalCount = await EnrollmentModel.countDocuments();
+        results.enrollments = finalCount;
+        console.log(`Total enrollments: ${finalCount}`);
+      } catch (error) {
+        const finalCount = await EnrollmentModel.countDocuments();
+        results.enrollments = finalCount;
         results.errors.push(`Enrollments: ${error.message}`);
         console.error("Error seeding enrollments:", error);
       }
-    } else {
-      results.enrollments = enrollmentCount;
-      console.log(`Enrollments already exist: ${enrollmentCount}`);
     }
     
     res.json({ 

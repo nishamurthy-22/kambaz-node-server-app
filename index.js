@@ -10,10 +10,30 @@ import AssignmentsRoutes from './Kambaz/Assignments/routes.js';
 import EnrollmentsRoutes from './Kambaz/Enrollments/routes.js';
 import "dotenv/config";
 import session from "express-session";
+import usersData from "./Kambaz/Database/users.js";
+import coursesData from "./Kambaz/Database/courses.js";
+import UserModel from "./Kambaz/Users/model.js";
+import CourseModel from "./Kambaz/Courses/model.js";
 
 const CONNECTION_STRING = process.env.DATABASE_CONNECTION_STRING || "mongodb://127.0.0.1:27017/kambaz";
-mongoose.connect(CONNECTION_STRING).then(() => {
+mongoose.connect(CONNECTION_STRING).then(async () => {
   console.log("Connected to MongoDB");
+  
+  // Seed users if collection is empty
+  const userCount = await UserModel.countDocuments();
+  if (userCount === 0) {
+    console.log("Seeding users...");
+    await UserModel.insertMany(usersData);
+    console.log(`Seeded ${usersData.length} users`);
+  }
+  
+  // Seed courses if collection is empty
+  const courseCount = await CourseModel.countDocuments();
+  if (courseCount === 0) {
+    console.log("Seeding courses...");
+    await CourseModel.insertMany(coursesData);
+    console.log(`Seeded ${coursesData.length} courses`);
+  }
 }).catch((error) => {
   console.error("MongoDB connection error:", error);
 });

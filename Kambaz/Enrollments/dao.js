@@ -3,8 +3,6 @@ import model from "./model.js";
 export default function EnrollmentsDao() {
 
   const enrollUserInCourse = async (userId, courseId) => {
-    // Use findOneAndUpdate with upsert to prevent duplicates
-    // Normalize IDs to strings for consistent comparison
     const userIdStr = String(userId);
     const courseIdStr = String(courseId);
     const enrollment = await model.findOneAndUpdate(

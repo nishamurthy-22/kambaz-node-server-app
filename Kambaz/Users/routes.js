@@ -8,17 +8,6 @@ export default function UserRoutes(app) {
     const user = await dao.createUser(req.body);
     res.json(user);};
 
-  
-  // const deleteUser = async (req, res) => {
-  //   const currentUser = req.session["currentUser"];
-  //   if (!currentUser || currentUser.role !== "FACULTY") {
-  //     res.sendStatus(403);
-  //     return;
-  //   }
-  //   const { userId } = req.params;
-  //   await dao.deleteUser(userId);
-  //   res.sendStatus(200);
-  // };
     const deleteUser = async (req, res) => {
       const status = await dao.deleteUser(req.params.userId);
       res.json(status);
@@ -63,29 +52,6 @@ const users = await dao.findAllUsers();
 
     res.json(usersInCourse);
   };
-  // const updateUser = async(req, res) => {
-  //   const currentUser = req.session["currentUser"];
-  //   const { userId } = req.params;
-  //   const userUpdates = req.body;
-
-  //   if (!currentUser) {
-  //     res.sendStatus(401);
-  //     return;
-  //   }
-  //   if (currentUser.role !== "FACULTY" && currentUser._id !== userId) {
-  //     res.sendStatus(403);
-  //     return;
-  //   }
-    
-  //   await dao.updateUser(userId, userUpdates);
-  //   const updatedUser = await dao.findUserById(userId);
-    
-  //   if (currentUser._id === userId) {
-  //     req.session["currentUser"] = updatedUser;
-  //   }
-    
-  //   res.json(updatedUser);
-  // };
 
    const updateUser = async (req, res) => {
     const { userId } = req.params;

@@ -23,7 +23,6 @@ const CONNECTION_STRING = process.env.DATABASE_CONNECTION_STRING || "mongodb://1
 mongoose.connect(CONNECTION_STRING).then(async () => {
   console.log("Connected to MongoDB");
   
-  // Seed users if collection is empty
   const userCount = await UserModel.countDocuments();
   if (userCount === 0) {
     console.log("Seeding users...");
@@ -31,7 +30,6 @@ mongoose.connect(CONNECTION_STRING).then(async () => {
     console.log(`Seeded ${usersData.length} users`);
   }
   
-  // Seed courses if collection is empty
   const courseCount = await CourseModel.countDocuments();
   if (courseCount === 0) {
     console.log("Seeding courses...");
@@ -39,7 +37,6 @@ mongoose.connect(CONNECTION_STRING).then(async () => {
     console.log(`Seeded ${coursesData.length} courses`);
   }
   
-  // Seed assignments if collection is empty
   const assignmentCount = await AssignmentModel.countDocuments();
   if (assignmentCount === 0) {
     console.log("Seeding assignments...");
@@ -47,7 +44,6 @@ mongoose.connect(CONNECTION_STRING).then(async () => {
     console.log(`Seeded ${assignmentsData.length} assignments`);
   }
   
-  // Seed enrollments if collection is empty
   const enrollmentCount = await EnrollmentModel.countDocuments();
   if (enrollmentCount === 0) {
     console.log("Seeding enrollments...");
@@ -72,11 +68,9 @@ app.use(
       if (allowedOrigins.includes(origin)) {
         return callback(null, true);
       }
-      // Allow any Vercel deployment
       if (origin.includes("vercel.app") || origin.includes("vercel-dns.com")) {
         return callback(null, true);
       }
-      // Allow localhost
       if (origin.startsWith("http://localhost")) {
         return callback(null, true);
       }
@@ -100,12 +94,10 @@ if (process.env.SERVER_ENV !== "development") {
 app.use(session(sessionOptions));
 app.use(express.json());
 
-// Manual seeding endpoint (supports both GET and POST)
 const seedDatabase = async (req, res) => {
   try {
     let results = { users: 0, courses: 0, assignments: 0, enrollments: 0, errors: [] };
     
-    // Seed users
     const userCount = await UserModel.countDocuments();
     if (userCount === 0) {
       try {
@@ -121,7 +113,6 @@ const seedDatabase = async (req, res) => {
       console.log(`Users already exist: ${userCount}`);
     }
     
-    // Seed courses
     const courseCount = await CourseModel.countDocuments();
     if (courseCount === 0) {
       try {
@@ -137,7 +128,6 @@ const seedDatabase = async (req, res) => {
       console.log(`Courses already exist: ${courseCount}`);
     }
     
-    // Seed assignments
     const assignmentCount = await AssignmentModel.countDocuments();
     if (assignmentCount === 0) {
       try {
@@ -153,7 +143,6 @@ const seedDatabase = async (req, res) => {
       console.log(`Assignments already exist: ${assignmentCount}`);
     }
     
-    // Seed enrollments
     const enrollmentCount = await EnrollmentModel.countDocuments();
     if (enrollmentCount === 0) {
       try {
@@ -183,11 +172,9 @@ const seedDatabase = async (req, res) => {
   }
 };
 
-// Seed endpoint - must be before other routes
 app.get("/api/seed", seedDatabase);
 app.post("/api/seed", seedDatabase);
 
-// Test endpoint to verify server is running
 app.get("/api/test", (req, res) => {
   res.json({ message: "Server is running", timestamp: new Date().toISOString() });
 });

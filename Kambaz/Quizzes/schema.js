@@ -1,5 +1,29 @@
 import mongoose from "mongoose";
 
+// Question Schema for subdocuments
+const questionSchema = new mongoose.Schema({
+  _id: String,
+  type: { 
+    type: String, 
+    enum: ["MULTIPLE_CHOICE", "TRUE_FALSE", "FILL_BLANK"],
+    required: true 
+  },
+  title: String,
+  points: { type: Number, default: 1 },
+  question: String,
+  
+  // For Multiple Choice questions
+  choices: [String],
+  correctChoice: Number, // index of correct choice
+  
+  // For True/False questions
+  correctAnswer: Boolean,
+  
+  // For Fill in Blank questions
+  possibleAnswers: [String],
+  caseSensitive: { type: Boolean, default: false }
+});
+
 const quizSchema = new mongoose.Schema(
   {
     _id: String,
@@ -23,9 +47,9 @@ const quizSchema = new mongoose.Schema(
     oneQuestionAtATime: { type: Boolean, default: true },
     webcamRequired: { type: Boolean, default: false },
     lockQuestionsAfterAnswering: { type: Boolean, default: false },
+    questions: [questionSchema] // Array of question subdocuments
   },
   { collection: "quizzes" }
 );
 
 export default quizSchema;
-

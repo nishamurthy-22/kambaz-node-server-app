@@ -7,7 +7,17 @@ export default function CourseRoutes(app) {
   const assignmentsDao = AssignmentsDao();
   const createCourse = async (req, res) => {
     const currentUser = req.session["currentUser"];
-    const newCourse = await dao.createCourse(req.body);
+    if (!currentUser) {
+      res.sendStatus(401);
+      return;
+    }
+    // Set the author to the current user
+    const courseData = { ...req.body, author: currentUser._id };
+    const newCourse = await dao.createCourse(courseData);
+    // Auto-enroll faculty in courses they create
+    if (currentUser.role === "FACULTY") {
+      await enrollmentsDao.enrollUserInCourse(currentUser._id, newCourse._id);
+    }
     res.json(newCourse);
   };
   app.post("/api/users/current/courses", createCourse);
@@ -39,7 +49,23 @@ export default function CourseRoutes(app) {
 
   const deleteCourse = async (req, res) => {
     const { courseId } = req.params;
+    const currentUser = req.session["currentUser"];
+    if (!currentUser) {
+      res.sendStatus(401);
+      return;
+    }
+    // Only faculty can delete courses
+    if (currentUser.role !== "FACULTY") {
+      res.status(403).json({ error: "Only faculty can delete courses" });
+      return;
+    }
     try {
+      // Check if course exists
+      const course = await dao.findCourseById(courseId);
+      if (!course) {
+        res.status(404).json({ error: "Course not found" });
+        return;
+      }
       await enrollmentsDao.unenrollAllFromCourse(courseId);
       await assignmentsDao.deleteAssignmentsForCourse(courseId);
       const result = await dao.deleteCourse(courseId);
@@ -55,6 +81,22 @@ export default function CourseRoutes(app) {
 const updateCourse = async (req, res) => {
     const { courseId } = req.params;
     const courseUpdates = req.body;
+    const currentUser = req.session["currentUser"];
+    if (!currentUser) {
+      res.sendStatus(401);
+      return;
+    }
+    // Only faculty can update courses
+    if (currentUser.role !== "FACULTY") {
+      res.status(403).json({ error: "Only faculty can edit courses" });
+      return;
+    }
+    // Check if course exists
+    const course = await dao.findCourseById(courseId);
+    if (!course) {
+      res.status(404).json({ error: "Course not found" });
+      return;
+    }
     const status = await dao.updateCourse(courseId, courseUpdates);
     res.send(status);
   }
@@ -111,4 +153,27 @@ const updateCourse = async (req, res) => {
     }
   };
   app.get("/api/courses/:cid/users", findUsersForCourse);
+
+  const findMyCourses = async (req, res) => {
+    const currentUser = req.session["currentUser"];
+    if (!currentUser) {
+      res.sendStatus(401);
+      return;
+    }
+    try {
+      let courses;
+      if (currentUser.role === "FACULTY") {
+        // Faculty see courses they created
+        courses = await dao.findCoursesByAuthor(currentUser._id);
+      } else {
+        // Students see courses they're enrolled in
+        courses = await enrollmentsDao.findCoursesForUser(currentUser._id);
+      }
+      res.json(courses);
+    } catch (error) {
+      console.error("Error finding courses for user:", error);
+      res.status(500).json({ error: "Failed to find courses for user" });
+    }
+  };
+  app.get("/api/users/current/courses", findMyCourses);
 }

@@ -37,5 +37,15 @@ export default function CoursesDao() {
     return updated;
   }
 
-  return { findAllCourses, findCoursesForEnrolledUser, createCourse, deleteCourse, updateCourse };
+  async function findCoursesByAuthor(authorId) {
+    const courses = await model.find({ author: String(authorId) }).lean();
+    return courses;
+  }
+
+  async function findCourseById(courseId) {
+    const course = await model.findById(courseId).lean();
+    return course;
+  }
+
+  return { findAllCourses, findCoursesForEnrolledUser, createCourse, deleteCourse, updateCourse, findCoursesByAuthor, findCourseById };
 }

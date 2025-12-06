@@ -7,6 +7,11 @@ export default function QuizzesDao() {
     return quizzes;
   }
 
+  async function findQuizById(quizId) {
+    const quiz = await model.findById(String(quizId)).lean();
+    return quiz;
+  }
+
   async function createQuiz(quiz) {
     const newQuiz = {
       ...quiz,
@@ -45,10 +50,10 @@ export default function QuizzesDao() {
 
   return {
     findQuizzesForCourse,
+    findQuizById,
     createQuiz,
     deleteQuiz,
     updateQuiz,
     deleteQuizzesForCourse,
   };
 }
-

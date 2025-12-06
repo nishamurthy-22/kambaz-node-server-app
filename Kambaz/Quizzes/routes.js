@@ -3,11 +3,57 @@ import QuizzesDao from "./dao.js";
 export default function QuizzesRoutes(app) {
   const dao = QuizzesDao();
 
+  // Helper to remove correct answers from quiz questions
+  const stripCorrectAnswers = (quiz, userRole) => {
+    // Faculty can see everything
+    if (userRole === "FACULTY") {
+      return quiz;
+    }
+
+    // Students don't get correct answers
+    const sanitizedQuiz = { ...quiz };
+    if (sanitizedQuiz.questions) {
+      sanitizedQuiz.questions = sanitizedQuiz.questions.map(q => {
+        const sanitizedQuestion = { ...q };
+        
+        // Remove correct answers based on question type
+        if (q.type === "MULTIPLE_CHOICE") {
+          delete sanitizedQuestion.correctChoice;
+        } else if (q.type === "TRUE_FALSE") {
+          delete sanitizedQuestion.correctAnswer;
+        } else if (q.type === "FILL_BLANK") {
+          // Remove possibleAnswers from blanks
+          if (sanitizedQuestion.blanks) {
+            sanitizedQuestion.blanks = sanitizedQuestion.blanks.map(blank => ({
+              points: blank.points,
+              caseSensitive: blank.caseSensitive
+              // possibleAnswers removed
+            }));
+          }
+          // Also remove legacy possibleAnswers
+          delete sanitizedQuestion.possibleAnswers;
+        }
+        
+        return sanitizedQuestion;
+      });
+    }
+    
+    return sanitizedQuiz;
+  };
+
   const findQuizzesForCourse = async (req, res) => {
     const { courseId } = req.params;
+    const currentUser = req.session["currentUser"];
+    
     try {
       const quizzes = await dao.findQuizzesForCourse(courseId);
-      res.json(quizzes);
+      
+      // Strip correct answers for students
+      const sanitizedQuizzes = quizzes.map(quiz => 
+        stripCorrectAnswers(quiz, currentUser?.role)
+      );
+      
+      res.json(sanitizedQuizzes);
     } catch (error) {
       console.error("Error finding quizzes for course:", error);
       res.status(500).json({ error: "Failed to find quizzes for course" });
@@ -55,5 +101,52 @@ export default function QuizzesRoutes(app) {
     }
   };
   app.put("/api/quizzes/:quizId", updateQuiz);
-}
 
+  // Debug route to check quiz data (faculty only)
+  const debugQuiz = async (req, res) => {
+    const { quizId } = req.params;
+    const currentUser = req.session["currentUser"];
+    
+    if (currentUser?.role !== "FACULTY") {
+      res.sendStatus(403);
+      return;
+    }
+    
+    try {
+      const quiz = await dao.findQuizById(quizId);
+      if (!quiz) {
+        res.status(404).json({ error: "Quiz not found" });
+        return;
+      }
+      
+      console.log("=== QUIZ DEBUG ===");
+      console.log("Quiz ID:", quiz._id);
+      console.log("Title:", quiz.title);
+      console.log("Total Points:", quiz.points);
+      console.log("Questions:", quiz.questions?.length);
+      
+      quiz.questions?.forEach((q, index) => {
+        console.log(`\nQuestion ${index + 1}:`);
+        console.log("  Type:", q.type);
+        console.log("  Points:", q.points);
+        if (q.type === "FILL_BLANK") {
+          console.log("  Blanks:", q.blanks?.length || 0);
+          q.blanks?.forEach((blank, bIndex) => {
+            console.log(`    Blank ${bIndex + 1}:`, {
+              points: blank.points,
+              answers: blank.possibleAnswers,
+              caseSensitive: blank.caseSensitive
+            });
+          });
+        }
+      });
+      console.log("=================");
+      
+      res.json(quiz);
+    } catch (error) {
+      console.error("Error debugging quiz:", error);
+      res.status(500).json({ error: "Failed to debug quiz" });
+    }
+  };
+  app.get("/api/quizzes/:quizId/debug", debugQuiz);
+}

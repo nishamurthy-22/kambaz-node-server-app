@@ -20,6 +20,12 @@ const questionSchema = new mongoose.Schema({
   correctAnswer: Boolean,
   
   // For Fill in Blank questions
+  blanks: [{
+    // Each blank has its own set of possible answers
+    possibleAnswers: [String],
+    caseSensitive: { type: Boolean, default: false }
+  }],
+  // Legacy support (single blank)
   possibleAnswers: [String],
   caseSensitive: { type: Boolean, default: false }
 });
@@ -39,6 +45,7 @@ const quizSchema = new mongoose.Schema(
     quizType: { type: String, default: "Graded Quiz" },
     assignmentGroup: { type: String, default: "QUIZZES" },
     shuffleAnswers: { type: Boolean, default: true },
+    hasTimeLimit: { type: Boolean, default: true },
     timeLimit: { type: Number, default: 20 },
     multipleAttempts: { type: Boolean, default: false },
     attemptsAllowed: { type: Number, default: 1 },
@@ -47,7 +54,7 @@ const quizSchema = new mongoose.Schema(
     oneQuestionAtATime: { type: Boolean, default: true },
     webcamRequired: { type: Boolean, default: false },
     lockQuestionsAfterAnswering: { type: Boolean, default: false },
-    questions: [questionSchema] // Array of question subdocuments
+    questions: [questionSchema]
   },
   { collection: "quizzes" }
 );

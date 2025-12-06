@@ -211,6 +211,7 @@ class DataFactory:
         ])
 
         question = {
+            "_id": kwargs.get("_id", str(uuid.uuid4())),
             "type": "MULTIPLE_CHOICE",
             "title": kwargs.get("title", f"Question: {fake.sentence(nb_words=6)}"),
             "points": kwargs.get("points", 1),
@@ -225,6 +226,7 @@ class DataFactory:
     def generate_true_false_question(**kwargs) -> Dict:
         """Generate true/false question"""
         question = {
+            "_id": kwargs.get("_id", str(uuid.uuid4())),
             "type": "TRUE_FALSE",
             "title": kwargs.get("title", f"Question: {fake.sentence(nb_words=6)}"),
             "points": kwargs.get("points", 1),
@@ -238,6 +240,7 @@ class DataFactory:
     def generate_fill_blank_question(**kwargs) -> Dict:
         """Generate fill in the blank question"""
         question = {
+            "_id": kwargs.get("_id", str(uuid.uuid4())),
             "type": "FILL_BLANK",
             "title": kwargs.get("title", f"Question: {fake.sentence(nb_words=6)}"),
             "points": kwargs.get("points", 1),

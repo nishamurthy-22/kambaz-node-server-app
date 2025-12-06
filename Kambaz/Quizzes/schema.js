@@ -19,13 +19,13 @@ const questionSchema = new mongoose.Schema({
   // For True/False questions
   correctAnswer: Boolean,
   
-  // For Fill in Blank questions
+  // For Fill in Blank questions - Multi-blank format
   blanks: [{
-    // Each blank has its own set of possible answers
     possibleAnswers: [String],
+    points: { type: Number, default: 1 },
     caseSensitive: { type: Boolean, default: false }
   }],
-  // Legacy support (single blank)
+  // Legacy support (single blank) - keeping for backward compatibility
   possibleAnswers: [String],
   caseSensitive: { type: Boolean, default: false }
 });

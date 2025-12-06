@@ -16,12 +16,6 @@ from helpers.db_utils import db_helper
 from test_config import config
 
 
-def pytest_configure(config_obj):
-    """Called before test run starts"""
-    config.print_config()
-    print("Initializing test suite...")
-
-
 @pytest.fixture(scope="session", autouse=True)
 def setup_test_environment():
     """
@@ -241,20 +235,20 @@ def sample_quiz_data():
 
 
 # Custom markers
-def pytest_configure(config_obj):
+def pytest_configure(config):
     """Register custom markers"""
-    config_obj.addinivalue_line(
+    config.addinivalue_line(
         "markers", "integration: Integration tests for API endpoints"
     )
-    config_obj.addinivalue_line(
+    config.addinivalue_line(
         "markers", "e2e: End-to-end workflow tests"
     )
-    config_obj.addinivalue_line(
+    config.addinivalue_line(
         "markers", "auth: Authentication and authorization tests"
     )
-    config_obj.addinivalue_line(
+    config.addinivalue_line(
         "markers", "slow: Tests that take longer to run"
     )
-    config_obj.addinivalue_line(
+    config.addinivalue_line(
         "markers", "quiz: Quiz-related tests"
     )

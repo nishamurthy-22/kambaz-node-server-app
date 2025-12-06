@@ -52,14 +52,27 @@ class TestEnrollments:
 
         assert response.status_code == 200
 
-    def test_get_course_users(self, authenticated_client_faculty, authenticated_client_student, sample_course):
+    def test_get_course_users(self, api_client):
         """Test getting all users enrolled in a course"""
-        # Student enrolls in course
-        student_client = authenticated_client_student
-        student_client.enroll_in_course(sample_course["_id"], "current")
+        # Create faculty and course
+        faculty_data = data_factory.generate_user(role="FACULTY")
+        api_client.signup(faculty_data)
+        api_client.signin({"username": faculty_data["username"], "password": faculty_data["password"]})
+
+        course_data = data_factory.generate_course()
+        course = api_client.create_course(course_data).json()
+
+        # Create and enroll student
+        api_client.signout()
+        student_data = data_factory.generate_user(role="STUDENT")
+        api_client.signup(student_data)
+        api_client.signin({"username": student_data["username"], "password": student_data["password"]})
+        api_client.enroll_in_course(course["_id"], "current")
 
         # Faculty gets course users
-        response = authenticated_client_faculty.get_course_users(sample_course["_id"])
+        api_client.signout()
+        api_client.signin({"username": faculty_data["username"], "password": faculty_data["password"]})
+        response = api_client.get_course_users(course["_id"])
 
         assert response.status_code == 200
         users = response.json()

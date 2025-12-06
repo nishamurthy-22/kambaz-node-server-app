@@ -5,11 +5,18 @@ export default function QuizzesRoutes(app) {
 
   // Helper to remove correct answers from quiz questions
   const stripCorrectAnswers = (quiz, userRole) => {
+    console.log("===== STRIP CORRECT ANSWERS =====");
+    console.log("User Role:", userRole);
+    console.log("=================================");
+    
     // Faculty can see everything
     if (userRole === "FACULTY") {
+      console.log("✓ Faculty - returning full quiz with correct answers");
       return quiz;
     }
 
+    console.log("❌ Student - stripping correct answers");
+    
     // Students don't get correct answers
     const sanitizedQuiz = { ...quiz };
     if (sanitizedQuiz.questions) {
@@ -18,7 +25,7 @@ export default function QuizzesRoutes(app) {
         
         // Remove correct answers based on question type
         if (q.type === "MULTIPLE_CHOICE") {
-          delete sanitizedQuestion.correctChoice;
+          delete sanitizedQuestion.correctAnswer;
         } else if (q.type === "TRUE_FALSE") {
           delete sanitizedQuestion.correctAnswer;
         } else if (q.type === "FILL_BLANK") {
@@ -44,6 +51,11 @@ export default function QuizzesRoutes(app) {
   const findQuizzesForCourse = async (req, res) => {
     const { courseId } = req.params;
     const currentUser = req.session["currentUser"];
+    
+    console.log("===== FIND QUIZZES FOR COURSE =====");
+    console.log("Current User exists:", !!currentUser);
+    console.log("Current User Role:", currentUser?.role);
+    console.log("===================================");
     
     try {
       const quizzes = await dao.findQuizzesForCourse(courseId);
@@ -92,8 +104,26 @@ export default function QuizzesRoutes(app) {
   const updateQuiz = async (req, res) => {
     const { quizId } = req.params;
     const quizUpdates = req.body;
+    
+    console.log("===== UPDATE QUIZ =====");
+    console.log("Quiz ID:", quizId);
+    console.log("Has questions:", !!quizUpdates.questions);
+    console.log("Questions count:", quizUpdates.questions?.length);
+    if (quizUpdates.questions && quizUpdates.questions.length > 0) {
+      console.log("First question correctAnswer:", quizUpdates.questions[0].correctAnswer);
+    }
+    console.log("=======================");
+    
     try {
       const quiz = await dao.updateQuiz(quizId, quizUpdates);
+      
+      console.log("===== QUIZ AFTER UPDATE =====");
+      console.log("Has questions:", !!quiz.questions);
+      if (quiz.questions && quiz.questions.length > 0) {
+        console.log("First question correctAnswer:", quiz.questions[0].correctAnswer);
+      }
+      console.log("=============================");
+      
       res.json(quiz);
     } catch (error) {
       console.error("Error updating quiz:", error);

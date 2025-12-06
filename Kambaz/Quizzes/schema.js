@@ -14,10 +14,10 @@ const questionSchema = new mongoose.Schema({
   
   // For Multiple Choice questions
   choices: [String],
-  correctChoice: Number, // index of correct choice
+  correctAnswer: String, // Store the actual answer text (not index) to support shuffling
   
-  // For True/False questions
-  correctAnswer: Boolean,
+  // For True/False questions - using same field name for consistency
+  // correctAnswer: Boolean (already defined above, will be String or Boolean)
   
   // For Fill in Blank questions - Multi-blank format
   blanks: [{
@@ -25,7 +25,7 @@ const questionSchema = new mongoose.Schema({
     points: { type: Number, default: 1 },
     caseSensitive: { type: Boolean, default: false }
   }],
-  // Legacy support (single blank) - keeping for backward compatibility
+  // Legacy support (single blank)
   possibleAnswers: [String],
   caseSensitive: { type: Boolean, default: false }
 });

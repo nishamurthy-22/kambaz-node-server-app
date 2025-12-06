@@ -5,7 +5,6 @@ export default function QuizAttemptsRoutes(app) {
   const dao = QuizAttemptsDao();
   const quizzesDao = QuizzesDao();
 
-  // Helper function for server-side grading validation
   const gradeQuizAttempt = (quiz, answers) => {
     let totalScore = 0;
     const gradedAnswers = [];
@@ -26,13 +25,20 @@ export default function QuizAttemptsRoutes(app) {
       let pointsEarned = 0;
 
       if (question.type === "MULTIPLE_CHOICE") {
-        isCorrect = studentAnswer.answer === question.correctChoice;
-        pointsEarned = isCorrect ? (question.points || 0) : 0;
-      } else if (question.type === "TRUE_FALSE") {
         isCorrect = studentAnswer.answer === question.correctAnswer;
         pointsEarned = isCorrect ? (question.points || 0) : 0;
+      } else if (question.type === "TRUE_FALSE") {
+        // Handle both boolean and string representations
+        const studentAns = studentAnswer.answer;
+        const correctAns = question.correctAnswer;
+        
+        // Normalize both to boolean for comparison
+        const studentBool = typeof studentAns === 'boolean' ? studentAns : studentAns === 'true';
+        const correctBool = typeof correctAns === 'boolean' ? correctAns : correctAns === 'true';
+        
+        isCorrect = studentBool === correctBool;
+        pointsEarned = isCorrect ? (question.points || 0) : 0;
       } else if (question.type === "FILL_BLANK") {
-        // Multi-blank support with partial credit
         if (question.blanks && question.blanks.length > 0) {
           const answersArray = Array.isArray(studentAnswer.answer) ? studentAnswer.answer : [];
           let allCorrect = true;
@@ -59,7 +65,6 @@ export default function QuizAttemptsRoutes(app) {
 
           isCorrect = allCorrect;
         } else {
-          // Legacy single blank
           const userAnswer = question.caseSensitive ? studentAnswer.answer : studentAnswer.answer.toLowerCase();
           isCorrect = question.possibleAnswers?.some((possibleAnswer) => {
             const checkAnswer = question.caseSensitive ? possibleAnswer : possibleAnswer.toLowerCase();
@@ -206,7 +211,6 @@ export default function QuizAttemptsRoutes(app) {
         return;
       }
 
-      // Get the quiz to validate answers
       const quiz = await quizzesDao.findQuizById(attempt.quiz);
       if (!quiz) {
         console.log("❌ Quiz not found");
@@ -214,14 +218,13 @@ export default function QuizAttemptsRoutes(app) {
         return;
       }
 
-      // Server-side grading validation
       const { score, answers: gradedAnswers } = gradeQuizAttempt(quiz, req.body.answers || []);
       
       console.log("✓ Server graded score:", score);
 
       const updates = {
         answers: gradedAnswers,
-        score: score, // Use server-calculated score
+        score: score,
         totalPoints: quiz.points || 0,
         submittedAt: new Date(),
         inProgress: false,

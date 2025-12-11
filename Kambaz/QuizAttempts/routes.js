@@ -87,21 +87,11 @@ export default function QuizAttemptsRoutes(app) {
   };
 
   const startAttempt = async (req, res) => {
-    console.log("===========================================");
-    console.log("START ATTEMPT API CALLED");
-    console.log("Session exists:", !!req.session);
-    console.log("Session ID:", req.session?.id);
-    console.log("Current User in session:", req.session["currentUser"] ? "YES" : "NO");
     if (req.session["currentUser"]) {
-      console.log("User ID:", req.session["currentUser"]._id);
-      console.log("User email:", req.session["currentUser"].email);
     }
-    console.log("Quiz ID:", req.params.quizId);
-    console.log("===========================================");
     
     const currentUser = req.session["currentUser"];
     if (!currentUser) {
-      console.log("❌ NO CURRENT USER - SENDING 401");
       res.sendStatus(401);
       return;
     }
@@ -109,7 +99,6 @@ export default function QuizAttemptsRoutes(app) {
     const { quizId } = req.params;
     try {
       const attemptCount = await dao.getCompletedAttemptCount(currentUser._id, quizId);
-      console.log("✓ Attempt count:", attemptCount);
       
       const newAttempt = {
         quiz: quizId,
@@ -123,25 +112,16 @@ export default function QuizAttemptsRoutes(app) {
         inProgress: true,
       };
       const attempt = await dao.createAttempt(newAttempt);
-      console.log("✓ Created attempt:", attempt._id);
       res.json(attempt);
     } catch (error) {
-      console.error("❌ Error starting quiz attempt:", error);
       res.status(500).json({ error: "Failed to start quiz attempt" });
     }
   };
 
   const updateAttempt = async (req, res) => {
-    console.log("===========================================");
-    console.log("UPDATE ATTEMPT API CALLED");
-    console.log("Session exists:", !!req.session);
-    console.log("Current User:", req.session["currentUser"] ? "YES" : "NO");
-    console.log("Attempt ID:", req.params.attemptId);
-    console.log("===========================================");
     
     const currentUser = req.session["currentUser"];
     if (!currentUser) {
-      console.log("❌ NO CURRENT USER - SENDING 401");
       res.sendStatus(401);
       return;
     }
@@ -150,17 +130,14 @@ export default function QuizAttemptsRoutes(app) {
     try {
       const attempt = await dao.findAttemptById(attemptId);
       if (!attempt) {
-        console.log("❌ Attempt not found");
         res.status(404).json({ error: "Attempt not found" });
         return;
       }
       if (attempt.student !== currentUser._id) {
-        console.log("❌ Student mismatch - SENDING 403");
         res.sendStatus(403);
         return;
       }
       if (!attempt.inProgress) {
-        console.log("❌ Attempt already submitted");
         res.status(400).json({ error: "Cannot update submitted attempt" });
         return;
       }
@@ -169,25 +146,16 @@ export default function QuizAttemptsRoutes(app) {
         answers: req.body.answers || attempt.answers,
       };
       const updated = await dao.updateAttemptAnswers(attemptId, updates);
-      console.log("✓ Updated attempt");
       res.json(updated);
     } catch (error) {
-      console.error("❌ Error updating quiz attempt:", error);
       res.status(500).json({ error: "Failed to update quiz attempt" });
     }
   };
 
   const submitAttempt = async (req, res) => {
-    console.log("===========================================");
-    console.log("SUBMIT ATTEMPT API CALLED");
-    console.log("Session exists:", !!req.session);
-    console.log("Current User:", req.session["currentUser"] ? "YES" : "NO");
-    console.log("Attempt ID:", req.params.attemptId);
-    console.log("===========================================");
     
     const currentUser = req.session["currentUser"];
     if (!currentUser) {
-      console.log("❌ NO CURRENT USER - SENDING 401");
       res.sendStatus(401);
       return;
     }
@@ -196,31 +164,26 @@ export default function QuizAttemptsRoutes(app) {
     try {
       const attempt = await dao.findAttemptById(attemptId);
       if (!attempt) {
-        console.log("❌ Attempt not found");
         res.status(404).json({ error: "Attempt not found" });
         return;
       }
       if (attempt.student !== currentUser._id) {
-        console.log("❌ Student mismatch - SENDING 403");
         res.sendStatus(403);
         return;
       }
       if (!attempt.inProgress) {
-        console.log("❌ Attempt already submitted");
         res.status(400).json({ error: "Attempt already submitted" });
         return;
       }
 
       const quiz = await quizzesDao.findQuizById(attempt.quiz);
       if (!quiz) {
-        console.log("❌ Quiz not found");
         res.status(404).json({ error: "Quiz not found" });
         return;
       }
 
       const { score, answers: gradedAnswers } = gradeQuizAttempt(quiz, req.body.answers || []);
       
-      console.log("✓ Server graded score:", score);
 
       const updates = {
         answers: gradedAnswers,
@@ -230,30 +193,18 @@ export default function QuizAttemptsRoutes(app) {
         inProgress: false,
       };
       const submitted = await dao.submitAttempt(attemptId, updates);
-      console.log("✓ Submitted attempt");
       res.json(submitted);
     } catch (error) {
-      console.error("❌ Error submitting quiz attempt:", error);
       res.status(500).json({ error: "Failed to submit quiz attempt" });
     }
   };
 
   const getInProgressAttempt = async (req, res) => {
-    console.log("===========================================");
-    console.log("GET IN-PROGRESS ATTEMPT API CALLED");
-    console.log("Session exists:", !!req.session);
-    console.log("Session ID:", req.session?.id);
-    console.log("Current User in session:", req.session["currentUser"] ? "YES" : "NO");
     if (req.session["currentUser"]) {
-      console.log("User ID:", req.session["currentUser"]._id);
-      console.log("User email:", req.session["currentUser"].email);
     }
-    console.log("Quiz ID:", req.params.quizId);
-    console.log("===========================================");
     
     const currentUser = req.session["currentUser"];
     if (!currentUser) {
-      console.log("❌ NO CURRENT USER - SENDING 401");
       res.sendStatus(401);
       return;
     }
@@ -261,25 +212,16 @@ export default function QuizAttemptsRoutes(app) {
     const { quizId } = req.params;
     try {
       const attempt = await dao.findInProgressAttempt(currentUser._id, quizId);
-      console.log("✓ In-progress attempt:", attempt ? "FOUND" : "NOT FOUND");
       res.json(attempt || null);
     } catch (error) {
-      console.error("❌ Error getting in-progress attempt:", error);
       res.status(500).json({ error: "Failed to get in-progress attempt" });
     }
   };
 
   const getStudentAttempts = async (req, res) => {
-    console.log("===========================================");
-    console.log("GET STUDENT ATTEMPTS API CALLED");
-    console.log("Session exists:", !!req.session);
-    console.log("Current User:", req.session["currentUser"] ? "YES" : "NO");
-    console.log("Quiz ID:", req.params.quizId);
-    console.log("===========================================");
     
     const currentUser = req.session["currentUser"];
     if (!currentUser) {
-      console.log("❌ NO CURRENT USER - SENDING 401");
       res.sendStatus(401);
       return;
     }
@@ -287,25 +229,16 @@ export default function QuizAttemptsRoutes(app) {
     const { quizId } = req.params;
     try {
       const attempts = await dao.findAttemptsByStudentAndQuiz(currentUser._id, quizId);
-      console.log("✓ Found attempts:", attempts.length);
       res.json(attempts);
     } catch (error) {
-      console.error("❌ Error getting student attempts:", error);
       res.status(500).json({ error: "Failed to get attempts" });
     }
   };
 
   const getAttemptById = async (req, res) => {
-    console.log("===========================================");
-    console.log("GET ATTEMPT BY ID API CALLED");
-    console.log("Session exists:", !!req.session);
-    console.log("Current User:", req.session["currentUser"] ? "YES" : "NO");
-    console.log("Attempt ID:", req.params.attemptId);
-    console.log("===========================================");
     
     const currentUser = req.session["currentUser"];
     if (!currentUser) {
-      console.log("❌ NO CURRENT USER - SENDING 401");
       res.sendStatus(401);
       return;
     }
@@ -314,39 +247,25 @@ export default function QuizAttemptsRoutes(app) {
     try {
       const attempt = await dao.findAttemptById(attemptId);
       if (!attempt) {
-        console.log("❌ Attempt not found");
         res.status(404).json({ error: "Attempt not found" });
         return;
       }
       if (attempt.student !== currentUser._id) {
-        console.log("❌ Student mismatch - SENDING 403");
         res.sendStatus(403);
         return;
       }
-      console.log("✓ Found attempt");
       res.json(attempt);
     } catch (error) {
-      console.error("❌ Error getting attempt:", error);
       res.status(500).json({ error: "Failed to get attempt" });
     }
   };
 
   const getAttemptCount = async (req, res) => {
-    console.log("===========================================");
-    console.log("GET ATTEMPT COUNT API CALLED");
-    console.log("Session exists:", !!req.session);
-    console.log("Session ID:", req.session?.id);
-    console.log("Current User in session:", req.session["currentUser"] ? "YES" : "NO");
     if (req.session["currentUser"]) {
-      console.log("User ID:", req.session["currentUser"]._id);
-      console.log("User email:", req.session["currentUser"].email);
     }
-    console.log("Quiz ID:", req.params.quizId);
-    console.log("===========================================");
     
     const currentUser = req.session["currentUser"];
     if (!currentUser) {
-      console.log("❌ NO CURRENT USER - SENDING 401");
       res.sendStatus(401);
       return;
     }
@@ -354,25 +273,16 @@ export default function QuizAttemptsRoutes(app) {
     const { quizId } = req.params;
     try {
       const count = await dao.getCompletedAttemptCount(currentUser._id, quizId);
-      console.log("✓ Attempt count:", count);
       res.json({ count });
     } catch (error) {
-      console.error("❌ Error getting attempt count:", error);
       res.status(500).json({ error: "Failed to get attempt count" });
     }
   };
 
   const getLatestAttempt = async (req, res) => {
-    console.log("===========================================");
-    console.log("GET LATEST ATTEMPT API CALLED");
-    console.log("Session exists:", !!req.session);
-    console.log("Current User:", req.session["currentUser"] ? "YES" : "NO");
-    console.log("Quiz ID:", req.params.quizId);
-    console.log("===========================================");
     
     const currentUser = req.session["currentUser"];
     if (!currentUser) {
-      console.log("❌ NO CURRENT USER - SENDING 401");
       res.sendStatus(401);
       return;
     }
@@ -380,10 +290,8 @@ export default function QuizAttemptsRoutes(app) {
     const { quizId } = req.params;
     try {
       const attempt = await dao.getLatestCompletedAttempt(currentUser._id, quizId);
-      console.log("✓ Latest attempt:", attempt ? "FOUND" : "NOT FOUND");
       res.json(attempt || null);
     } catch (error) {
-      console.error("❌ Error getting latest attempt:", error);
       res.status(500).json({ error: "Failed to get latest attempt" });
     }
   };

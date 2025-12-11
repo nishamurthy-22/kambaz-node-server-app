@@ -1,6 +1,5 @@
 import mongoose from "mongoose";
 
-// Question Schema for subdocuments
 const questionSchema = new mongoose.Schema({
   _id: String,
   type: { 
@@ -12,20 +11,14 @@ const questionSchema = new mongoose.Schema({
   points: { type: Number, default: 1 },
   question: String,
   
-  // For Multiple Choice questions
   choices: [String],
-  correctAnswer: String, // Store the actual answer text (not index) to support shuffling
+  correctAnswer: String,
   
-  // For True/False questions - using same field name for consistency
-  // correctAnswer: Boolean (already defined above, will be String or Boolean)
-  
-  // For Fill in Blank questions - Multi-blank format
   blanks: [{
     possibleAnswers: [String],
     points: { type: Number, default: 1 },
     caseSensitive: { type: Boolean, default: false }
   }],
-  // Legacy support (single blank)
   possibleAnswers: [String],
   caseSensitive: { type: Boolean, default: false }
 });

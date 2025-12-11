@@ -67,17 +67,14 @@ export default function UserRoutes(app) {
     try {
       const existingUser = await dao.findUserByUsername(req.body.username);
       if (existingUser) {
-        console.log(`SIGNUP - Username '${req.body.username}' already exists`);
         res.status(400).json({ message: "Username already in use" });
         return;
       }
       
       const currentUser = await dao.createUser(req.body);
       req.session["currentUser"] = currentUser;
-      console.log(`SIGNUP - Created user: ${currentUser.username} (${currentUser._id})`);
       res.json(currentUser);
     } catch (error) {
-      console.error("SIGNUP - Error:", error);
       res.status(500).json({ message: "Signup failed. Please try again." });
     }
   };
@@ -86,10 +83,8 @@ export default function UserRoutes(app) {
     try {
       const { username, password } = req.body;
       
-      console.log(`SIGNIN - Attempt for username: '${username}'`);
       
       if (!username || !password) {
-        console.log("SIGNIN - Missing username or password");
         res.status(400).json({ message: "Username and password are required" });
         return;
       }
@@ -98,21 +93,17 @@ export default function UserRoutes(app) {
       
       if (currentUser) {
         req.session["currentUser"] = currentUser;
-        console.log(`SIGNIN - Success: ${currentUser.username} (${currentUser.role})`);
         res.json(currentUser);
       } else {
         // Check if username exists
         const userExists = await dao.findUserByUsername(username);
         if (userExists) {
-          console.log(`SIGNIN - Failed: Username '${username}' exists but wrong password`);
           res.status(401).json({ message: "Invalid password" });
         } else {
-          console.log(`SIGNIN - Failed: Username '${username}' not found`);
           res.status(401).json({ message: "Username not found" });
         }
       }
     } catch (error) {
-      console.error("SIGNIN - Error:", error);
       res.status(500).json({ message: "Server error. Please try again later." });
     }
   };
@@ -120,18 +111,15 @@ export default function UserRoutes(app) {
   const signout = async (req, res) => {
     const username = req.session["currentUser"]?.username;
     req.session["currentUser"] = null;
-    console.log(`SIGNOUT - User: ${username || 'unknown'}`);
     res.sendStatus(200);
   };
 
   const profile = async (req, res) => {
     const currentUser = req.session["currentUser"];
     if (!currentUser) {
-      console.log("PROFILE - No current user in session");
       res.sendStatus(401);
       return;
     }
-    console.log(`PROFILE - User: ${currentUser.username}`);
     res.json(currentUser);
   };
 

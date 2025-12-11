@@ -26,7 +26,6 @@ export default function CourseRoutes(app) {
       const courses = await dao.findAllCourses();
       res.json(courses);
     } catch (error) {
-      console.error("Error fetching courses:", error);
       res.status(500).json({ error: "Failed to fetch courses" });
     }
   }
@@ -71,7 +70,6 @@ export default function CourseRoutes(app) {
       const result = await dao.deleteCourse(courseId);
       res.json(result);
     } catch (error) {
-      console.error("Error deleting course:", error);
       const errorMessage = error instanceof Error ? error.message : String(error);
       res.status(500).json({ error: "Failed to delete course: " + errorMessage });
     }
@@ -116,7 +114,6 @@ const updateCourse = async (req, res) => {
       const enrollment = await enrollmentsDao.enrollUserInCourse(uid, cid);
       res.json(enrollment);
     } catch (error) {
-      console.error("Error enrolling user in course:", error);
       res.status(500).json({ error: "Failed to enroll user in course" });
     }
   };
@@ -135,7 +132,6 @@ const updateCourse = async (req, res) => {
       await enrollmentsDao.unenrollUserFromCourse(uid, cid);
       res.sendStatus(200);
     } catch (error) {
-      console.error("Error unenrolling user from course:", error);
       res.status(500).json({ error: "Failed to unenroll user from course" });
     }
   };
@@ -148,7 +144,6 @@ const updateCourse = async (req, res) => {
       const users = await enrollmentsDao.findUsersForCourse(cid);
       res.json(users);
     } catch (error) {
-      console.error("Error finding users for course:", error);
       res.status(500).json({ error: "Failed to find users for course" });
     }
   };
@@ -171,7 +166,6 @@ const updateCourse = async (req, res) => {
       }
       res.json(courses);
     } catch (error) {
-      console.error("Error finding courses for user:", error);
       res.status(500).json({ error: "Failed to find courses for user" });
     }
   };

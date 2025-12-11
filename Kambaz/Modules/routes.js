@@ -21,7 +21,6 @@ export default function ModulesRoutes(app) {
       const status = await dao.deleteModule(courseId, moduleId);
       res.json(status);
     } catch (error) {
-      console.error("Error deleting module:", error);
       res.status(500).json({ error: "Failed to delete module" });
     }
   }
@@ -34,7 +33,6 @@ export default function ModulesRoutes(app) {
       const module = await dao.updateModule(courseId, moduleId, moduleUpdates);
       res.json(module);
     } catch (error) {
-      console.error("Error updating module:", error);
       res.status(500).json({ error: "Failed to update module" });
     }
   }

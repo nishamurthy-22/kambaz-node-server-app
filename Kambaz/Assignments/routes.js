@@ -9,7 +9,6 @@ export default function AssignmentsRoutes(app) {
       const assignments = await dao.findAssignmentsForCourse(courseId);
       res.json(assignments);
     } catch (error) {
-      console.error("Error finding assignments for course:", error);
       res.status(500).json({ error: "Failed to find assignments for course" });
     }
   };
@@ -25,7 +24,6 @@ export default function AssignmentsRoutes(app) {
       const newAssignment = await dao.createAssignment(assignment);
       res.json(newAssignment);
     } catch (error) {
-      console.error("Error creating assignment:", error);
       res.status(500).json({ error: "Failed to create assignment" });
     }
   };
@@ -37,7 +35,6 @@ export default function AssignmentsRoutes(app) {
       const result = await dao.deleteAssignment(assignmentId);
       res.json(result);
     } catch (error) {
-      console.error("Error deleting assignment:", error);
       res.status(500).json({ error: "Failed to delete assignment" });
     }
   };
@@ -50,7 +47,6 @@ export default function AssignmentsRoutes(app) {
       const assignment = await dao.updateAssignment(assignmentId, assignmentUpdates);
       res.json(assignment);
     } catch (error) {
-      console.error("Error updating assignment:", error);
       res.status(500).json({ error: "Failed to update assignment" });
     }
   };

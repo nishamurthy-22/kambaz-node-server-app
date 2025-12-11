@@ -23,39 +23,29 @@ import EnrollmentModel from "./Kambaz/Enrollments/model.js";
 
 const CONNECTION_STRING = process.env.DATABASE_CONNECTION_STRING || "mongodb://127.0.0.1:27017/kambaz";
 mongoose.connect(CONNECTION_STRING).then(async () => {
-  console.log("Connected to MongoDB");
   
   const userCount = await UserModel.countDocuments();
   if (userCount === 0) {
-    console.log("Seeding users...");
     await UserModel.insertMany(usersData);
-    console.log(`Seeded ${usersData.length} users`);
   }
   
   const courseCount = await CourseModel.countDocuments();
   if (courseCount === 0) {
-    console.log("Seeding courses...");
     await CourseModel.insertMany(coursesData);
-    console.log(`Seeded ${coursesData.length} courses`);
   }
   
   const assignmentCount = await AssignmentModel.countDocuments();
   if (assignmentCount === 0) {
-    console.log("Seeding assignments...");
     await AssignmentModel.insertMany(assignmentsData);
-    console.log(`Seeded ${assignmentsData.length} assignments`);
   }
   
   const enrollmentCount = await EnrollmentModel.countDocuments();
   if (enrollmentCount === 0) {
-    console.log("Seeding enrollments...");
     try {
       await EnrollmentModel.insertMany(enrollmentsData, { ordered: false });
       const newCount = await EnrollmentModel.countDocuments();
-      console.log(`Seeded ${newCount} enrollments`);
     } catch (error) {
       const newCount = await EnrollmentModel.countDocuments();
-      console.log(`Seeded ${newCount} enrollments (some may have failed: ${error.message})`);
     }
   } else {
     try {
@@ -66,16 +56,12 @@ mongoose.connect(CONNECTION_STRING).then(async () => {
       if (missingEnrollments.length > 0) {
         await EnrollmentModel.insertMany(missingEnrollments, { ordered: false });
         const finalCount = await EnrollmentModel.countDocuments();
-        console.log(`Inserted ${missingEnrollments.length} missing enrollments. Total: ${finalCount}`);
       } else {
-        console.log(`All ${enrollmentCount} enrollments already exist`);
       }
     } catch (error) {
-      console.error("Error inserting missing enrollments:", error);
     }
   }
 }).catch((error) => {
-  console.error("MongoDB connection error:", error);
 });
 
 const app = express();
@@ -127,14 +113,11 @@ const seedDatabase = async (req, res) => {
       try {
         await UserModel.insertMany(usersData);
         results.users = usersData.length;
-        console.log(`Seeded ${usersData.length} users`);
       } catch (error) {
         results.errors.push(`Users: ${error.message}`);
-        console.error("Error seeding users:", error);
       }
     } else {
       results.users = userCount;
-      console.log(`Users already exist: ${userCount}`);
     }
     
     const courseCount = await CourseModel.countDocuments();
@@ -142,14 +125,11 @@ const seedDatabase = async (req, res) => {
       try {
         await CourseModel.insertMany(coursesData);
         results.courses = coursesData.length;
-        console.log(`Seeded ${coursesData.length} courses`);
       } catch (error) {
         results.errors.push(`Courses: ${error.message}`);
-        console.error("Error seeding courses:", error);
       }
     } else {
       results.courses = courseCount;
-      console.log(`Courses already exist: ${courseCount}`);
     }
     
     const assignmentCount = await AssignmentModel.countDocuments();
@@ -157,14 +137,11 @@ const seedDatabase = async (req, res) => {
       try {
         await AssignmentModel.insertMany(assignmentsData);
         results.assignments = assignmentsData.length;
-        console.log(`Seeded ${assignmentsData.length} assignments`);
       } catch (error) {
         results.errors.push(`Assignments: ${error.message}`);
-        console.error("Error seeding assignments:", error);
       }
     } else {
       results.assignments = assignmentCount;
-      console.log(`Assignments already exist: ${assignmentCount}`);
     }
     
     const enrollmentCount = await EnrollmentModel.countDocuments();
@@ -173,13 +150,10 @@ const seedDatabase = async (req, res) => {
         await EnrollmentModel.insertMany(enrollmentsData, { ordered: false });
         const newCount = await EnrollmentModel.countDocuments();
         results.enrollments = newCount;
-        console.log(`Seeded ${newCount} enrollments`);
       } catch (error) {
         const newCount = await EnrollmentModel.countDocuments();
         results.enrollments = newCount;
         results.errors.push(`Enrollments: ${error.message}`);
-        console.error("Error seeding enrollments:", error);
-        console.log(`Inserted ${newCount} enrollments despite errors`);
       }
     } else {
       try {
@@ -189,16 +163,13 @@ const seedDatabase = async (req, res) => {
         
         if (missingEnrollments.length > 0) {
           await EnrollmentModel.insertMany(missingEnrollments, { ordered: false });
-          console.log(`Inserted ${missingEnrollments.length} missing enrollments`);
         }
         const finalCount = await EnrollmentModel.countDocuments();
         results.enrollments = finalCount;
-        console.log(`Total enrollments: ${finalCount}`);
       } catch (error) {
         const finalCount = await EnrollmentModel.countDocuments();
         results.enrollments = finalCount;
         results.errors.push(`Enrollments: ${error.message}`);
-        console.error("Error seeding enrollments:", error);
       }
     }
     
@@ -208,7 +179,6 @@ const seedDatabase = async (req, res) => {
       results 
     });
   } catch (error) {
-    console.error("Seeding error:", error);
     res.status(500).json({ 
       success: false, 
       error: error.message 
@@ -221,14 +191,12 @@ app.post("/api/seed", seedDatabase);
 
 const reseedDatabase = async (req, res) => {
   try {
-    console.log("Starting full reseed...");
     
     await UserModel.deleteMany({});
     await CourseModel.deleteMany({});
     await AssignmentModel.deleteMany({});
     await EnrollmentModel.deleteMany({});
     
-    console.log("Cleared all collections");
     
 
     await UserModel.insertMany(usersData);
@@ -243,7 +211,6 @@ const reseedDatabase = async (req, res) => {
       enrollments: await EnrollmentModel.countDocuments()
     };
     
-    console.log("Reseed completed:", results);
     
     res.json({ 
       success: true, 
@@ -251,7 +218,6 @@ const reseedDatabase = async (req, res) => {
       results 
     });
   } catch (error) {
-    console.error("Reseed error:", error);
     res.status(500).json({ 
       success: false, 
       error: error.message 
